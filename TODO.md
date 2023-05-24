@@ -1,0 +1,14 @@
+- [+] Write a parser
+	- [+] Add tokens for keywords
+	- [+] Use stream parsing
+- [ ] Write a lexer
+	- [ ] Write language commands
+		- [ ] Create variable
+		- [ ] Read variable
+		- [ ] Modify variable
+		- [ ] Call function
+		- [ ] Create function
+		- [ ] Create code block
+		- [ ] Import symbols
+- [ ] Write an executor
+	- [ ] ...
