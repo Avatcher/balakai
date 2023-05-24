@@ -1,5 +1,6 @@
 .vscode/
 debug/
 release/
+build/
 
 script.bai

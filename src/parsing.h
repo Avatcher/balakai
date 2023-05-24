@@ -42,11 +42,9 @@ public:
 
 	static Token keyword(Name&& name, icu::UnicodeString pattern);
 
-	std::optional<Parsed> parse(icu::RegexMatcher& matcher, UErrorCode& status) const;
-
 	struct Parsed {
 		const Name name;
-		const std::vector< icu::UnicodeString> groups;
+		const std::vector<icu::UnicodeString> groups;
 		
 		std::size_t length() const;
 	};

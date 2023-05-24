@@ -21,6 +21,8 @@ namespace {
 
 namespace balakai::parsing {
 
+std::size_t Token::lastId = 0;
+
 Token::Token(Token::Name&& name, icu::UnicodeString const& pattern):
 		name(name), regex(build_pattern(name, pattern)), id(Token::lastId++) { }
 
@@ -29,21 +31,6 @@ Token Token::keyword(Token::Name&& name, icu::UnicodeString pattern) {
 		std::move(name.insert(0, "KEYWORD_")),
 		pattern.insert(0, "\\b").append("\\b")
 	);
-}
-
-
-std::optional<Token::Parsed> Token::parse(icu::RegexMatcher& matcher, UErrorCode& status) const {
-	if (matcher.lookingAt(status)) {
-		std::vector< icu::UnicodeString> groups { matcher.group(status) };
-		for (std::size_t i = 0; i < matcher.groupCount(); i++) {
-			groups.push_back(matcher.group(i, status));
-		}
-		return std::make_optional(Token::Parsed {
-			name, std::move(groups)
-		});
-	} else {
-		return std::nullopt;
-	}
 }
 
 std::size_t Token::Parsed::length() const {
@@ -78,12 +65,18 @@ std::vector<Token::Parsed> Parser::parse(std::istream& in, icu::UnicodeString co
 			for (std::size_t i = 0; i < tokens.size(); i++) {
 				auto& token = tokens.at(i);
 				auto matcher = matchers.at(i);
-				matcher->reset(slice);
-				auto result = token.parse(*matcher, status);
-			
-				if (result.has_value()) {
-					parsed.push_back(*result);
-					position.ch += result->length();
+				matcher->reset(slice);  // SIGSEGV
+				if (matcher->lookingAt(status)) {
+					std::vector<icu::UnicodeString> groups { matcher->group(status) };
+					for (std::size_t i = 0; i < matcher->groupCount(); i++) {
+						groups.push_back(matcher->group(i, status));
+					}
+					auto result = Token::Parsed {
+						token.name,
+						std::move(groups)
+					};
+					parsed.push_back(result);
+					position.ch += result.length();
 					tokenRecognised = true;
 					break;
 				}

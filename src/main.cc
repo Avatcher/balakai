@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
 	auto argsParser = argumentum::argument_parser{};
 	auto params = argsParser.params();
 	argsParser.config().program(argv[0]).description("Balakai Interpreter");
-	params.add_parameter(filePath).metavar("FILE").help("Source code");
+	params.add_parameter(filePath, "FILE").metavar("FILE").help("Source code");
 
 	if (!argsParser.parse_args(argc, argv, 1)) return 1;
 
