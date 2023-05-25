@@ -37,7 +37,7 @@ TEST_F(TokenTest, Names) {
 
 TEST_F(TokenTest, KeywordMatch) {
 	UErrorCode status = U_ZERO_ERROR;
-	auto matcher = keyword.matcher(status);
+	std::unique_ptr<icu::RegexMatcher> matcher(keyword.matcher(status));
 	EXPECT_FALSE(U_FAILURE(status));
 
 	matcher->reset("foo test bar");
@@ -51,8 +51,6 @@ TEST_F(TokenTest, KeywordMatch) {
 	EXPECT_FALSE(matcher->find(status));
 	matcher->reset("foo testbar");
 	EXPECT_FALSE(matcher->find(status));
-
-	delete matcher;
 }
 
 TEST_F(TokenTest, Parsed) {

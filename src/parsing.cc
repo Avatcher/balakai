@@ -62,9 +62,9 @@ void Parser::register_tokens(std::initializer_list<Token> tokens) {
 
 std::vector<Token::Parsed> Parser::parse(std::istream& in, icu::UnicodeString const& sourceName) const {
 	UErrorCode status;
-	std::vector<icu::RegexMatcher*> matchers;
+	std::vector<std::unique_ptr<icu::RegexMatcher>> matchers;
 	for (auto& token: tokens) {
-		matchers.push_back(token.matcher(status));
+		matchers.push_back(std::unique_ptr<icu::RegexMatcher>(token.matcher(status)));
 	}
 	std::vector<Token::Parsed> parsed;
 	CodePosition position { sourceName };
@@ -77,7 +77,7 @@ std::vector<Token::Parsed> Parser::parse(std::istream& in, icu::UnicodeString co
 			bool tokenRecognised = false;
 			for (std::size_t i = 0; i < tokens.size(); i++) {
 				auto& token = tokens.at(i);
-				auto matcher = matchers.at(i);
+				auto& matcher = matchers.at(i);
 				matcher->reset(slice);
 				if (matcher->lookingAt(status)) {
 					std::vector<icu::UnicodeString> groups;
@@ -100,13 +100,11 @@ std::vector<Token::Parsed> Parser::parse(std::istream& in, icu::UnicodeString co
 				}
 			}
 			if (!tokenRecognised) {
-				for (auto matcher: matchers) delete matcher;
 				throw UnexpectedTokenException(position, line);
 			}
 		}
 		position.nextLine();
 	}
-	for (auto matcher: matchers) delete matcher;
 	return parsed;
 }
 
