@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <unicode/ustream.h>
 
 #include "parsing.h"
 
@@ -29,14 +30,14 @@ TEST_F(TokenTest, Ids) {
 }
 
 TEST_F(TokenTest, Names) {
-	EXPECT_TRUE(dummies[0].name == "FIRST");
-	EXPECT_TRUE(dummies[1].name == "SECOND");
-	EXPECT_TRUE(keyword.name == "KEYWORD_TEST");
+	EXPECT_EQ(dummies[0].name, "FIRST");
+	EXPECT_EQ(dummies[1].name, "SECOND");
+	EXPECT_EQ(keyword.name, "KEYWORD_TEST");
 }
 
 TEST_F(TokenTest, KeywordMatch) {
 	UErrorCode status = U_ZERO_ERROR;
-	auto matcher = keyword.regex.matcher(status);
+	auto matcher = keyword.matcher(status);
 	EXPECT_FALSE(U_FAILURE(status));
 
 	matcher->reset("foo test bar");
@@ -50,12 +51,14 @@ TEST_F(TokenTest, KeywordMatch) {
 	EXPECT_FALSE(matcher->find(status));
 	matcher->reset("foo testbar");
 	EXPECT_FALSE(matcher->find(status));
+
+	delete matcher;
 }
 
 TEST_F(TokenTest, Parsed) {
 	EXPECT_EQ(6, parsed.length());
 	EXPECT_EQ(2, parsed.groups.size());
-	EXPECT_TRUE(parsed.name == "TEST");
+	EXPECT_EQ(parsed.name, "TEST");
 }
 
 class ParserTest: public ::testing::Test {
@@ -88,20 +91,20 @@ TEST_F(ParserTest, Tokens) {
 	stream << "iffer";
 	parsed = parser.parse(stream, "std::stringstream");
 	EXPECT_EQ(1, parsed.size());
-	EXPECT_TRUE(parsed.at(0).name == "SYMBOL");
+	EXPECT_EQ(parsed.at(0).name, "SYMBOL");
 	stream.clear();
 
 	stream << "if byte is 8 then megabyte is mega8";
 	parsed = parser.parse(stream, "std::stringstream");
 	EXPECT_EQ(15, parsed.size());
-	EXPECT_TRUE(parsed.at(2).name == "SYMBOL");
-	EXPECT_TRUE(parsed.at(2).groups.at(0) == "byte");
-	EXPECT_TRUE(parsed.at(2).groups.at(1) == "b");
-	EXPECT_TRUE(parsed.at(6).name == "NUMBER");
-	EXPECT_TRUE(parsed.at(6).groups.at(0) == "8");
-	EXPECT_TRUE(parsed.at(14).name == "SYMBOL");
-	EXPECT_TRUE(parsed.at(14).groups.at(0) == "mega8");
-	EXPECT_TRUE(parsed.at(14).groups.at(2) == "ega8");
+	EXPECT_EQ(parsed.at(2).name, "SYMBOL");
+	EXPECT_EQ(parsed.at(2).groups.at(0), "byte");
+	EXPECT_EQ(parsed.at(2).groups.at(1), "b");
+	EXPECT_EQ(parsed.at(6).name, "NUMBER");
+	EXPECT_EQ(parsed.at(6).groups.at(0), "8");
+	EXPECT_EQ(parsed.at(14).name, "SYMBOL");
+	EXPECT_EQ(parsed.at(14).groups.at(0), "mega8");
+	EXPECT_EQ(parsed.at(14).groups.at(2), "ega8");
 	stream.clear();
 }
 
@@ -116,8 +119,8 @@ TEST_F(ParserTest, Exceptions) {
 	} catch (UnexpectedTokenException const& e) {
 		EXPECT_EQ(1, e.position.ln);
 		EXPECT_EQ(7, e.position.ch);
-		EXPECT_TRUE(e.position.source == "std::stringstream");
-		EXPECT_TRUE(e.line == line);
+		EXPECT_EQ(e.position.source, "std::stringstream");
+		EXPECT_EQ(e.line, line);
 		throw e;
 	}
 }

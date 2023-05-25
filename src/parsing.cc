@@ -11,7 +11,7 @@ namespace {
 		UErrorCode status = U_ZERO_ERROR;
 		auto regex = icu::RegexPattern::compile(pattern, 0, status);
 		if (U_FAILURE(status)) {
-			std::cerr << "FATAL: Couldn't initialise regex pattern for token '" << name << "'\n";
+			std::cerr << "FATAL: Failed to initialise regex pattern for token '" << name << "'\n";
 			throw;
 		} else {
 			return *regex;
@@ -24,13 +24,26 @@ namespace balakai::parsing {
 std::size_t Token::lastId = 0;
 
 Token::Token(Token::Name&& name, icu::UnicodeString const& pattern):
-		name(name), regex(build_pattern(name, pattern)), id(Token::lastId++) { }
+		name(name), pattern(build_pattern(name, pattern)), id(Token::lastId++) { }
 
 Token Token::keyword(Token::Name&& name, icu::UnicodeString pattern) {
 	return Token(
 		std::move(name.insert(0, "KEYWORD_")),
 		pattern.insert(0, "\\b").append("\\b")
 	);
+}
+
+icu::RegexMatcher* Token::matcher(UErrorCode& status) const {
+	status = U_ZERO_ERROR;
+	icu::RegexMatcher* matcher = pattern.matcher(status);
+	if (U_FAILURE(status)) {
+		std::cerr << "FATAL: Failed to create a regex matcher for token '" << name << "'\n"
+			<< "pattern: " << pattern.pattern() << "\n"
+			<< u_errorName(status) << std::endl;
+		throw;
+	} else {
+		return matcher;
+	}
 }
 
 std::size_t Token::Parsed::length() const {
@@ -51,7 +64,7 @@ std::vector<Token::Parsed> Parser::parse(std::istream& in, icu::UnicodeString co
 	UErrorCode status;
 	std::vector<icu::RegexMatcher*> matchers;
 	for (auto& token: tokens) {
-		matchers.push_back(token.regex.matcher(status));
+		matchers.push_back(token.matcher(status));
 	}
 	std::vector<Token::Parsed> parsed;
 	CodePosition position { sourceName };
@@ -65,15 +78,20 @@ std::vector<Token::Parsed> Parser::parse(std::istream& in, icu::UnicodeString co
 			for (std::size_t i = 0; i < tokens.size(); i++) {
 				auto& token = tokens.at(i);
 				auto matcher = matchers.at(i);
-				matcher->reset(slice);  // SIGSEGV
+				matcher->reset(slice);
 				if (matcher->lookingAt(status)) {
-					std::vector<icu::UnicodeString> groups { matcher->group(status) };
-					for (std::size_t i = 0; i < matcher->groupCount(); i++) {
-						groups.push_back(matcher->group(i, status));
+					std::vector<icu::UnicodeString> groups;
+					if (matcher->groupCount() == 0) {
+						groups.push_back(matcher->group(status));
+					} else {
+						for (std::size_t i = 0; i <= matcher->groupCount(); i++) {
+							auto group = matcher->group(i, status);
+							groups.push_back(group);
+						}
 					}
 					auto result = Token::Parsed {
 						token.name,
-						std::move(groups)
+						groups
 					};
 					parsed.push_back(result);
 					position.ch += result.length();
@@ -82,11 +100,13 @@ std::vector<Token::Parsed> Parser::parse(std::istream& in, icu::UnicodeString co
 				}
 			}
 			if (!tokenRecognised) {
+				for (auto matcher: matchers) delete matcher;
 				throw UnexpectedTokenException(position, line);
 			}
 		}
 		position.nextLine();
 	}
+	for (auto matcher: matchers) delete matcher;
 	return parsed;
 }
 

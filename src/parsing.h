@@ -36,11 +36,13 @@ public:
 	/**
 	 * The regular expression of the token.
 	 */
-	const icu::RegexPattern regex;
+	const icu::RegexPattern pattern;
 
 	Token(Name&& name, icu::UnicodeString const& pattern);
 
 	static Token keyword(Name&& name, icu::UnicodeString pattern);
+
+	icu::RegexMatcher* matcher(UErrorCode& status) const;
 
 	struct Parsed {
 		const Name name;
