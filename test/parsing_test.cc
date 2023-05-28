@@ -66,13 +66,19 @@ protected:
 	std::vector<Token::Parsed> parsed;
 
 	void SetUp() override {
+		parser.register_token_groups({
+			TokenGroup("KEYWORDS", {
+				Token::keyword("IF", "if"),
+				Token::keyword("IS", "is"),
+				Token::keyword("THEN", "then")
+			}),
+			TokenGroup("IGNORABLE", {
+				Token("SPACE", " ")
+			})
+		});
 		parser.register_tokens({
-			Token::keyword("IF", "if"),
-			Token::keyword("IS", "is"),
-			Token::keyword("THEN", "then"),
 			Token("NUMBER", "\\b[0-9]+\\b"),
 			Token("SYMBOL", "\\b([a-zA-Z_])([a-zA-Z0-9_]*)\\b"),
-			Token("SPACE", " ")
 		});
 	}
 };

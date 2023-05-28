@@ -26,18 +26,6 @@ void execute(const char* path) {
 	using namespace balakai::parsing;
 
 	Parser parser;
-	// parser.register_tokens({
-	// 	// Keywords
-	// 	Token::keyword("IS",       "is"),
-	// 	Token::keyword("USE",      "use"),
-	// 	Token::keyword("AND",      "and"),
-	// 	Token::keyword("VARIABLE", "variable"),
-	// 	Token::keyword("EQUAL",    "equal"),
-	// 	Token::keyword("OF",       "of"),
-	// 	Token::keyword("FUNCTION", "function"),
-	// 	Token::keyword("WITH",     "with"),
-	// 	Token("SYMBOL", "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b")
-	// });
 	parser.register_token_groups({
 		TokenGroup("KEYWORDS", {
 			Token::keyword("IS",       "is"),
