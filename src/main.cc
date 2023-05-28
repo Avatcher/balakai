@@ -26,20 +26,42 @@ void execute(const char* path) {
 	using namespace balakai::parsing;
 
 	Parser parser;
+	// parser.register_tokens({
+	// 	// Keywords
+	// 	Token::keyword("IS",       "is"),
+	// 	Token::keyword("USE",      "use"),
+	// 	Token::keyword("AND",      "and"),
+	// 	Token::keyword("VARIABLE", "variable"),
+	// 	Token::keyword("EQUAL",    "equal"),
+	// 	Token::keyword("OF",       "of"),
+	// 	Token::keyword("FUNCTION", "function"),
+	// 	Token::keyword("WITH",     "with"),
+	// 	Token("SYMBOL", "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b")
+	// });
+	parser.register_token_groups({
+		TokenGroup("KEYWORDS", {
+			Token::keyword("IS",       "is"),
+			Token::keyword("USE",      "use"),
+			Token::keyword("AND",      "and"),
+			Token::keyword("VARIABLE", "variable"),
+			Token::keyword("EQUAL",    "equal"),
+			Token::keyword("OF",       "of"),
+			Token::keyword("FUNCTION", "function"),
+			Token::keyword("WITH",     "with"),
+		}),
+		TokenGroup("IGNORABLE", {
+			Token("SPACE", " "),
+			Token("TAB", "\t"),
+			Token("NEWLINE", "\n")
+		}),
+		TokenGroup("LITERALS", {
+			Token("STRING", R"(\".*\")"),
+			Token("NUMBER", "-?[0-9]+")
+		})
+	});
 	parser.register_tokens({
-		// Keywords
-		Token::keyword("IS",       "is"),
-		Token::keyword("USE",      "use"),
-		Token::keyword("AND",      "and"),
-		Token::keyword("VARIABLE", "variable"),
-		Token::keyword("EQUAL",    "equal"),
-		Token::keyword("OF",       "of"),
-		Token::keyword("FUNCTION", "function"),
-		Token::keyword("WITH",     "with"),
-		Token("DOT", "\\."),
-		Token("SPACE", " "),
-		Token("TAB", "\t"),
-		Token("SYMBOL", "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b")
+		Token("SYMBOL", "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b"),
+		Token("DOT", "\\.")
 	});
 
 	std::ifstream file;

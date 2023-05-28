@@ -21,6 +21,23 @@ namespace {
 
 namespace balakai::parsing {
 
+TokenGroup::TokenGroup(TokenGroup::Name const& name): name(name) { }
+
+TokenGroup::TokenGroup(TokenGroup::Name const& name, std::initializer_list<Token> const& tokens):
+		name(name) {
+	for (Token const& token: tokens) {
+		this->_tokens.push_back(token);
+	}
+}
+
+void TokenGroup::add_token(Token const& token) {
+	_tokens.push_back(token);
+}
+
+std::vector<Token> const& TokenGroup::tokens() const {
+	return _tokens;
+}
+
 std::size_t Token::lastId = 0;
 
 Token::Token(Token::Name&& name, icu::UnicodeString const& pattern):
@@ -31,6 +48,11 @@ Token Token::keyword(Token::Name&& name, icu::UnicodeString pattern) {
 		std::move(name.insert(0, "KEYWORD_")),
 		pattern.insert(0, "\\b").append("\\b")
 	);
+}
+
+Token Token::in_group(TokenGroup& group) {
+	group.add_token(*this);
+	return *this;
 }
 
 icu::RegexMatcher* Token::matcher(UErrorCode& status) const {
@@ -52,11 +74,25 @@ std::size_t Token::Parsed::length() const {
 
 void Parser::register_token(Token const& token) {
 	tokens.push_back(token);
+	std::cout << "Registered token " << token.name << std::endl;
 }
 
 void Parser::register_tokens(std::initializer_list<Token> tokens) {
 	for (auto token: tokens) {
 		register_token(token);
+	}
+}
+
+void Parser::register_token_group(TokenGroup const& group) {
+	tokenGroups.push_back(group);
+	for (Token const& token: group.tokens()) {
+		register_token(token);
+	}
+}
+
+void Parser::register_token_groups(std::initializer_list<TokenGroup> groups) {
+	for (TokenGroup const& group: groups) {
+		register_token_group(group);
 	}
 }
 

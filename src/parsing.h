@@ -13,6 +13,39 @@
  */
 namespace balakai::parsing {
 
+struct Token;
+
+/**
+ * A group of tokens sharing some similar properties.
+ */
+struct TokenGroup {
+	std::vector<Token> _tokens;
+public:
+	using Name = icu::UnicodeString;
+	/**
+	 * The name of the group.
+	 */
+	const Name name;
+
+	TokenGroup(Name const& name);
+
+	TokenGroup(Name const& name, std::initializer_list<Token> const& tokens);
+
+	/**
+	 * Adds a token to the group.
+	 * 
+	 * @param token A new token
+	 */
+	void add_token(Token const& token);
+
+	/**
+	 * Returns all tokens of the group.
+	 * 
+	 * @return Tokens of the group
+	 */
+	std::vector<Token> const& tokens() const;
+};
+
 /**
  * A syntax token.
  */
@@ -40,39 +73,95 @@ public:
 
 	Token(Name&& name, icu::UnicodeString const& pattern);
 
+	/**
+	 * Creates a new token for a keyword.
+	 * 
+	 * @param name A name of the keyword
+	 * @param pattern A word
+	 * @return Keyword token
+	 */
 	static Token keyword(Name&& name, icu::UnicodeString pattern);
 
+	/**
+	 * Adds token to a specific group
+	 * 
+	 * @param group 
+	 * @return Token&& 
+	 */
+	Token in_group(TokenGroup& group);
+
+	/**
+	 * Returns a regex matcher for this token.
+	 * 
+	 * @param status UErrorCode
+	 * @return A pointer to a matcher
+	 */
 	icu::RegexMatcher* matcher(UErrorCode& status) const;
 
+	/**
+	 * A found token in the code with
+	 * corresponding strings.
+	 */
 	struct Parsed {
+		/**
+		 * The name of the original token.
+		 */
 		const Name name;
+		/**
+		 * Matched string groups.
+		 */
 		const std::vector<icu::UnicodeString> groups;
 		
+		/**
+		 * Returns the length of the full matched string.
+		 * 
+		 * @return The length of the string
+		 */
 		std::size_t length() const;
 	};
 };
+
 
 /**
  * A syntax parser
  */
 class Parser {
 	/**
-	 * Registred tokens.
+	 * Registered groups of tokens.
 	 */
-	std::vector< Token> tokens;
+	std::vector<TokenGroup> tokenGroups;
+
+	/**
+	 * Registered tokens.
+	 */
+	std::vector<Token> tokens;
 
 public:
 	/**
+	 * Registers a groups of tokens in the parser.
+	 * 
+	 * @param group A new group of tokens
+	 */
+	void register_token_group(TokenGroup const& group);
+
+	/**
+	 * Registers multiple groups of tokens in the parser.
+	 * 
+	 * @param groups New groups of tokens
+	 */
+	void register_token_groups(std::initializer_list<TokenGroup> groups);
+
+	/**
 	 * Registers a new syntax token in the parser.
 	 * 
-	 * @param token A new token.
+	 * @param token A new token
 	 */
 	void register_token(Token const& token);
 
 	/**
 	 * Registers multiple syntax tokens in the parser.
 	 * 
-	 * @param token A new token.
+	 * @param token A new token
 	 */
 	void register_tokens(std::initializer_list<Token> tokens);
 
@@ -104,8 +193,12 @@ struct CodePosition {
 	 */
 	std::size_t ch = 1;
 
+	/**
+	 * Changes position to the beginning of the next line.
+	 */
 	void nextLine();
 };
+
 std::ostream& operator<<(std::ostream&, CodePosition const&);
 
 /**
@@ -116,7 +209,7 @@ struct ParsingException: public std::exception {
 };
 
 /**
- * An exception related to finding an unregistred
+ * An exception related to finding an unregistered
  * in the parser syntax token while parsing.
  */
 struct UnexpectedTokenException: public ParsingException {
