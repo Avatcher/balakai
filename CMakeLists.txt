@@ -4,6 +4,7 @@ project(balakai)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 set(SOURCES
 	src/parsing.cc
+	src/tokens.cc
 )
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall -G")
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall")

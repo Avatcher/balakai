@@ -8,119 +8,12 @@
 
 #include <unicode/regex.h>
 
+#include "tokens.h"
+
 /**
  * Components related to syntax parsing of the language.
  */
 namespace balakai::parsing {
-
-struct Token;
-
-/**
- * A group of tokens sharing some similar properties.
- */
-struct TokenGroup {
-	std::vector<Token> _tokens;
-public:
-	using Name = icu::UnicodeString;
-	/**
-	 * The name of the group.
-	 */
-	const Name name;
-
-	TokenGroup(Name const& name);
-
-	TokenGroup(Name const& name, std::initializer_list<Token> const& tokens);
-
-	/**
-	 * Adds a token to the group.
-	 * 
-	 * @param token A new token
-	 */
-	void add_token(Token const& token);
-
-	/**
-	 * Returns all tokens of the group.
-	 * 
-	 * @return Tokens of the group
-	 */
-	std::vector<Token> const& tokens() const;
-};
-
-/**
- * A syntax token.
- */
-struct Token {
-private:
-	static std::size_t lastId;
-public:
-	using Name = icu::UnicodeString;
-	/**
-	 * A parsed token.
-	 */
-	class Parsed;
-	/**
-	 * The name of the token.
-	 */
-	const Name name;
-	/**
-	 * The id of the token.
-	 */
-	const std::size_t id;
-	/**
-	 * The regular expression of the token.
-	 */
-	const icu::RegexPattern pattern;
-
-	Token(Name&& name, icu::UnicodeString const& pattern);
-
-	/**
-	 * Creates a new token for a keyword.
-	 * 
-	 * @param name A name of the keyword
-	 * @param pattern A word
-	 * @return Keyword token
-	 */
-	static Token keyword(Name&& name, icu::UnicodeString pattern);
-
-	/**
-	 * Adds token to a specific group
-	 * 
-	 * @param group 
-	 * @return Token&& 
-	 */
-	Token in_group(TokenGroup& group);
-
-	/**
-	 * Returns a regex matcher for this token.
-	 * 
-	 * @param status UErrorCode
-	 * @return A pointer to a matcher
-	 */
-	icu::RegexMatcher* matcher(UErrorCode& status) const;
-
-	/**
-	 * A found token in the code with
-	 * corresponding strings.
-	 */
-	struct Parsed {
-		/**
-		 * The name of the original token.
-		 */
-		const Name name;
-		/**
-		 * Matched string groups.
-		 */
-		const std::vector<icu::UnicodeString> groups;
-		
-		/**
-		 * Returns the length of the full matched string.
-		 * 
-		 * @return The length of the string
-		 */
-		std::size_t length() const;
-	};
-};
-
 
 /**
  * A syntax parser
@@ -134,9 +27,11 @@ class Parser {
 	/**
 	 * Registered tokens.
 	 */
-	std::vector<Token> tokens;
+	TokenGroup tokens;
 
 public:
+	Parser();
+
 	/**
 	 * Registers a groups of tokens in the parser.
 	 * 
@@ -164,6 +59,10 @@ public:
 	 * @param token A new token
 	 */
 	void register_tokens(std::initializer_list<Token> tokens);
+
+	TokenGroup const& group(TokenGroup::Name const& name) const;
+
+	TokenGroup const& token(Token::Name const& name) const;
 
 	/**
 	 * Parses an input stream into a list of syntax tokens.
